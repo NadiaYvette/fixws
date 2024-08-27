@@ -1,0 +1,121 @@
+cabal-version: 3.0
+
+name:                   fixws
+version:                2.2.2
+synopsis:               Whitespace fixer-upper.
+description:            Whitespace fixer-upper.
+category:               Code,
+                        Style,
+copyright:              Nadia Chambers, 2019-2023 Input Output Global Inc (IOG), 2023-2024 Intersect.
+author:                 Nadia Chambers
+maintainer:             nadia.chambers@gmail.com
+license:                EUPL-1.2
+license-files:          EUPL-1.2-EN.txt
+build-type:             Simple
+-- extra-source-files:     README.md
+-- data-files:             data/*.json
+
+common project-config
+  if os(windows)
+    buildable: False
+
+common with-library
+library
+  import:               project-config
+
+  hs-source-dirs:       src
+  exposed-modules:      Data.Char.FixWS
+
+  -- other-modules:        Data.Char.FixWS
+                        -- Paths_fixws
+  -- other-modules:        Paths_fixws
+
+  -- autogen-modules:      Paths_fixws
+
+  build-depends:        base
+                      , bytestring
+                      , cond
+                      , large-records
+                      , record-hasfield
+                      , transformers
+
+  default-language:     Haskell2010
+  default-extensions:   BlockArguments
+                        ConstraintKinds
+                        DataKinds
+                        DeriveAnyClass
+                        FlexibleContexts
+                        FlexibleInstances
+                        GADTs
+                        ImpredicativeTypes
+                        KindSignatures
+                        LambdaCase
+                        MonadComprehensions
+                        MultiParamTypeClasses
+                        NamedFieldPuns
+                        NoMonoLocalBinds
+                        OverloadedLists
+                        -- OverloadedRecordDot
+                        -- OverloadedRecordUpdate
+                        OverloadedStrings
+                        PolyKinds
+                        PartialTypeSignatures
+                        QuantifiedConstraints
+                        RankNTypes
+                        RebindableSyntax
+                        RecordWildCards
+                        ScopedTypeVariables
+                        StandaloneDeriving
+                        TemplateHaskell
+                        TypeApplications
+                        TypeFamilies
+                        TypeOperators
+
+executable fixws
+  import:               project-config
+  hs-source-dirs:       app
+  main-is:              Main.hs
+  default-language:     Haskell2010
+  ghc-options:          -threaded
+                        -Wall
+                        -rtsopts
+                        "-with-rtsopts=-T"
+  -- other-modules:        FixWS.Main
+
+  build-depends:        base
+                      , bytestring
+                      , cond
+                      , fixws
+                      , large-records
+                      , record-hasfield
+                      , transformers
+  default-extensions:   BlockArguments
+                        ConstraintKinds
+                        DataKinds
+                        DeriveAnyClass
+                        FlexibleContexts
+                        FlexibleInstances
+                        GADTs
+                        ImpredicativeTypes
+                        KindSignatures
+                        LambdaCase
+                        MonadComprehensions
+                        MultiParamTypeClasses
+                        NamedFieldPuns
+                        NoMonoLocalBinds
+                        OverloadedLists
+                        -- OverloadedRecordDot
+                        -- OverloadedRecordUpdate
+                        OverloadedStrings
+                        PolyKinds
+                        PartialTypeSignatures
+                        QuantifiedConstraints
+                        RankNTypes
+                        RebindableSyntax
+                        RecordWildCards
+                        ScopedTypeVariables
+                        StandaloneDeriving
+                        TemplateHaskell
+                        TypeApplications
+                        TypeFamilies
+                        TypeOperators

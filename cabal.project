@@ -1,0 +1,131 @@
+-- See CONTRIBUTING for information about these, including some Nix commands
+-- you need to run if you change them
+index-state:
+  , hackage.haskell.org 2024-06-23T23:01:13Z
+
+packages: .
+
+-- extra-packages: Cabal
+keep-going: True
+
+program-options
+  ghc-options: -Wall
+               -Werror
+               -Wno-error=missing-home-modules
+               -Wno-error=partial-type-signatures
+               -Wno-error=unused-imports
+               -Wno-error=unused-matches
+               -Wno-error=unused-local-binds
+               -Wno-error=redundant-constraints
+               -Wno-error=simplifiable-class-constraints
+               -- In principle, a richer language could be worthwhile.
+               -- -XApplicativeDo
+               -- -XArrows
+               -- -XBlockArguments
+               -- -XConstrainedClassMethods
+               -- -XDataKinds
+               -- -XDefaultSignatures
+               -- -XDeriveAnyClass
+               -- -XDeriveDataTypeable
+               -- -XDeriveFoldable
+               -- -XDeriveFunctor
+               -- -XDeriveGeneric
+               -- -XDeriveLift
+               -- -XDeriveTraversable
+               -- -XDerivingStrategies
+               -- -XDerivingVia
+               -- -XDisambiguateRecordFields
+               -- -XDoAndIfThenElse
+               -- -XDuplicateRecordFields
+               -- -XEmptyCase
+               -- -XEmptyDataDecls
+               -- -XEmptyDataDeriving
+               -- -XExplicitNamespaces
+               -- -XExtendedDefaultRules
+               -- -XFieldSelectors
+               -- -XFlexibleContexts
+               -- -XFlexibleInstances
+               -- -XGADTs
+               -- -XGeneralisedNewtypeDeriving
+               -- -XImportQualifiedPost
+               -- -XImpredicativeTypes
+               -- -XInstanceSigs
+               -- -XKindSignatures
+               -- -XLambdaCase
+               -- -XLexicalNegation
+               -- -XLiberalTypeSynonyms
+               -- -XLinearTypes
+               -- -XMonadComprehensions
+               -- -XMultiWayIf
+               -- -XNamedFieldPuns
+               -- -XNamedWildCards
+               -- -XNPlusKPatterns
+               -- -XNumericUnderscores
+               -- -XNoMonoLocalBinds
+               -- -XOverloadedLabels
+               -- -XOverloadedLists
+               -- -XOverloadedRecordDot
+               -- -XOverloadedRecordUpdate
+               -- -XOverloadedStrings
+               -- -XPackageImports
+               -- -XParallelArrays
+               -- -XParallelListComp
+               -- -XPartialTypeSignatures
+               -- -XPatternGuards
+               -- -XPatternSynonyms
+               -- -XPolyKinds
+               -- -XPolymorphicComponents
+               -- -XPostfixOperators
+               -- -XQualifiedDo
+               -- -XQuantifiedConstraints
+               -- -XQuasiQuotes
+               -- -XRankNTypes
+               -- -XRebindableSyntax
+               -- -XRecordWildCards
+               -- -XRecursiveDo
+               -- -XRelaxedLayout
+               -- -XRoleAnnotations
+               -- -XScopedTypeVariables
+               -- -XStandaloneDeriving
+               -- -XStandaloneKindSignatures
+               -- -XTemplateHaskell
+               -- -XTemplateHaskellQuotes
+               -- -XTransformListComp
+               -- -XTupleSections
+               -- -XTypeApplications
+               -- -XTypeFamilies
+               -- -XTypeFamilyDependencies
+               -- -XTypeInType
+               -- -XTypeOperators
+               -- -XTypeSynonymInstances
+               -- -XUnicodeSyntax
+               -- -XViewPatterns
+
+test-show-details: direct
+
+-- Always write GHC env files, because they are needed for ghci.
+write-ghc-environment-files: always
+
+-- package cryptonite
+  -- Using RDRAND instead of /dev/urandom as an entropy source for key
+  -- generation is dubious. Set the flag so we use /dev/urandom by default.
+--  flags: -support_rdrand
+
+-- package snap-server
+--  flags: +openssl
+
+-- package bitvec
+--  flags: -simd
+
+-- If required for haddocks to build successfully:
+-- package unknown-package-example
+--  haddock-options: "--optghc=-fplugin-opt UnknownExample.Plugin:defer-errors"
+
+-- constraints:
+--  unknown-example < 3.1.15,
+
+-- allow-newer: unknown-example:Win32
+
+-- IMPORTANT
+-- Do NOT add more source-repository-package stanzas here unless they are strictly
+-- temporary! Please read the section in CONTRIBUTING about updating dependencies.

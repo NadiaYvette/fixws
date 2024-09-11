@@ -1,114 +1,58 @@
+#!/usr/bin/env -S stack
+{- stack --resolver lts-22.28 --install-ghc --jobs 200 --compiler ghc-9.10.1 script --ghc-options -ignore-dot-ghci --package base --package containers --package transformers -}
+-- vi: ft=haskell
+{-# LANGUAGE BlockArguments        #-}
+{-# LANGUAGE LambdaCase            #-}
+{-# LANGUAGE ViewPatterns          #-}
+
 module Data.Char.FixWS
-  ( fixws ) where
+  ( processLine
+  , processLineM) where
 
-import           Prelude
-
-import           Control.Conditional ((?), (??))
--- import qualified Control.Conditional as Cond
--- import qualified Control.Monad as Monad (when)
-import Control.Monad.Trans.RWS (RWST)
 import qualified Control.Monad.Trans.RWS as RWS
-                   ( ask
-                   , asks
-                   , evalRWST
-                   , get
-                   , put
-                   , modify
-                   , tell)
 
+import           Data.Bifunctor (bimap, first)
 import qualified Data.Char as Char
-                   ( isPrint
-                   , isSpace)
+import qualified Data.Foldable as Foldable
+import           Data.Functor.Identity (Identity (..))
+import           Data.Sequence (Seq, ViewL (..), ViewR (..), (|>))
+import qualified Data.Sequence as Seq
 
-import           Data.Functor.Identity
-import qualified Data.List as List
-import qualified Data.Maybe as Maybe
+type WSMonad m t = RWS.RWST Int (Seq Char) (Seq (Char, Int), Int) m t
 
-import           GHC.Exts
-import           GHC.IsList
+enqueueChar :: Monad m => Char -> WSMonad m ()
+-- Deliberately drop all pending whitespace upon encountering newline.
+enqueueChar '\LF' = RWS.tell (Seq.singleton '\LF') >> RWS.put (Seq.empty, 1)
+enqueueChar c
+  | Char.isSpace c = RWS.modify $ first \case
+        q@(Seq.viewr -> (rest :> (c', n))) | c == c'   -> rest |> (c, n + 1)
+                                           | otherwise ->    q |> (c, 1)
+        _ {- EmptyL Sequence -} -> Seq.singleton (c, 1)
+  -- Upon encountering non-whitespace, flush pending queue to the writer.
+  | otherwise = do flushQueue
+                   RWS.tell $ Seq.singleton c
+                   RWS.modify $ const Seq.empty `bimap` (+ 1)
 
-fixws :: ScreenConstraints Identity string => string -> string
-fixws s = snd . runIdentity $ RWS.evalRWST
-  (mapM_ emit $ toList s :: ScreenConstraints Identity string => ScreenMonad Identity string ())
-  ScreenReader
-  { srTabWidth = 2 }
-  ScreenState
-  { ssCurrentColumn = 1
-  , ssLastPrintable = Nothing
-  , ssPendingSpaces = 0
-  , ssTabStopList = [] }
+flushQueue :: Monad m => WSMonad m ()
+flushQueue = RWS.ask >>= \width -> do
+  first Seq.viewl <$> RWS.get >>= \case
+    (EmptyL, _) -> pure ()
+    ((c, n) :< rest, column)
+      | '\HT' <- c
+      , m <- width - (column `rem` width) + 1 + (n - 1) * width
+      -> mv (rest, '\SP', m, column + m)
+      | '\LF' <- c -> mv (rest, c, n, 1)
+      | otherwise  -> mv (rest, c, n, column + n)
+  where mv (q, c', k, p) = do RWS.tell (Seq.replicate k c')
+                              RWS.put (q, p)
+                              flushQueue
 
-type Column = Int
-type ScreenConstraints monad string =
-  ( Monad monad
-  , IsString string
-  , IsList string
-  , Item string ~ Char
-  , Monoid string)
+processLineM :: Monad m => String -> m String
+processLineM s = Foldable.toList . snd <$>
+  RWS.execRWST (mapM_ enqueueChar s) 8 (Seq.empty, 1)
 
+processLine :: String -> String
+processLine = runIdentity . processLineM
 
--- | `ScreenReader` is a tabstop width for when the list of hand-set
---   tabstops runs out. The list of tabstops would, in a way, be good
---   to have here; however, the algorithm now in use destructively
---   updates the state while traversing it in parallel with the string
---   representing a line.
-data ScreenReader =
-  ScreenReader
-  { srTabWidth :: Column }
-
-type ScreenWriter string = string
-
--- | `ScreenState` is a pair of integers representing the next
---   tabstop and the cursor's position while emitting.
-data ScreenState = -- (Int, [Int])
-  ScreenState
-  { ssCurrentColumn :: Column
-  , ssLastPrintable :: Maybe Column
-  , ssPendingSpaces :: Column
-  , ssTabStopList :: [Column] }
-
--- | The `ScreenMonad` type is the relevant type of a monadic action
---   carried out while emitting characters.
-type ScreenMonad m string t =
-  RWST ScreenReader (ScreenWriter string) ScreenState m t
-
--- | `emit` is supposed to only emit one character, but the character
---   types associated with a string structure aren't easily associable.
-emit :: forall monad string . ()
-  => ScreenConstraints monad string
-  => Char
-  -> ScreenMonad monad string ()
-emit c = do
-  ScreenReader { .. } <- RWS.ask
-  ScreenState { .. } <- RWS.get
-  case c of
-    '\HT'
-      | nextTabStop : tabStop' <- ssTabStopList
-      , advance <- nextTabStop - ssCurrentColumn
-      -> RWS.modify \state -> state
-          { ssCurrentColumn = nextTabStop
-          , ssPendingSpaces = ssPendingSpaces + advance
-          , ssTabStopList = tabStop' }
-      | columnRemainder <- ssCurrentColumn `rem` srTabWidth
-      , advance <- srTabWidth - columnRemainder
-      -> RWS.modify \state -> state
-          { ssCurrentColumn = ssCurrentColumn + advance
-          , ssPendingSpaces = ssPendingSpaces + advance }
-    _ | newColumn <- ssCurrentColumn + 1
-      , (prefix, newPendingSpaces) <- Char.isPrint c
-          ?  (replicate ssPendingSpaces '\SP', 0)
-          ?? ([], ssPendingSpaces + 1)
-      , newTabStops <- Maybe.fromJust . (List.uncons ssTabStopList >>=) $
-          \(nextTabStop, tabStops') -> Just $
-              newColumn >= nextTabStop ? tabStops' ?? ssTabStopList
-      -> do RWS.tell . fromString $ prefix <> [c]
-            RWS.modify \state -> state
-              { ssCurrentColumn = newColumn
-              , ssTabStopList = newTabStops }
-      {-
-      , newTabStops <- flip (maybe []) (List.uncons ssTabStopList)
-                           \case (nextTabStop, tabStops')
-                                 | newColumn >= nextTabStop -> tabStops'
-                                 | otherwise -> ssTabStopList
-                                 -}
-                           -- \(nextTabStop, tabStops') -> newColumn >= nextTabStop ? tabStops' ?? ssTabStopList
+main :: IO () -- This could be mapM_ (putStrLn <=< processLineM)
+main = mapM_ (putStrLn . processLine) . lines =<< getContents

@@ -9,8 +9,8 @@ category:               Code,
 copyright:              Nadia Chambers, 2019-2023 Input Output Global Inc (IOG), 2023-2024 Intersect.
 author:                 Nadia Chambers
 maintainer:             nadia.chambers@gmail.com
-license:                EUPL-1.2
-license-files:          EUPL-1.2-EN.txt
+license:                BSD-3-Clause
+license-files:          LICENSE
 build-type:             Simple
 
 common project-config

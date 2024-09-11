@@ -1,22 +1,31 @@
 #!/usr/bin/env -S stack
-{- stack --resolver lts-22.28 --install-ghc --jobs 200 --compiler ghc-9.10.1 script --ghc-options -ignore-dot-ghci --package base --package containers --package transformers -}
+{- stack --resolver lts-22.28 --install-ghc --jobs 200 --compiler ghc-9.10.1 script --package base --package composition-extra --package containers --package transformers --ghc-options -ignore-dot-ghci -}
 -- vi: ft=haskell
-{-# LANGUAGE BlockArguments        #-}
-{-# LANGUAGE LambdaCase            #-}
-{-# LANGUAGE ViewPatterns          #-}
+{-# LANGUAGE BlockArguments           #-}
+{-# LANGUAGE LambdaCase               #-}
+{-# LANGUAGE PackageImports           #-}
+{-# LANGUAGE ViewPatterns             #-}
+{-# OPTIONS_GHC -Wno-unused-top-binds #-}
 
 module Data.Char.FixWS
-  ( processLine
-  , processLineM) where
+  ( fixWSLineM
+  , fixWSLine
+  , fixWSFile
+  , fixWSstdio) where
 
-import qualified Control.Monad.Trans.RWS as RWS
+import qualified "transformers" Control.Monad.Trans.RWS as RWS
 
 import           Data.Bifunctor (bimap, first)
 import qualified Data.Char as Char
 import qualified Data.Foldable as Foldable
+import           "composition-extra" Data.Function.Contravariant.Syntax ((-.))
+import           "composition-extra" Data.Functor.Syntax ((<&&>))
+import           Data.Functor ((<&>))
 import           Data.Functor.Identity (Identity (..))
-import           Data.Sequence (Seq, ViewL (..), ViewR (..), (|>))
-import qualified Data.Sequence as Seq
+import           "containers" Data.Sequence (Seq, ViewL (..), ViewR (..), (|>))
+import qualified "containers" Data.Sequence as Seq
+import qualified System.IO as IO
+import           Prelude
 
 type WSMonad m t = RWS.RWST Int (Seq Char) (Seq (Char, Int), Int) m t
 
@@ -35,7 +44,7 @@ enqueueChar c
 
 flushQueue :: Monad m => WSMonad m ()
 flushQueue = RWS.ask >>= \width -> do
-  first Seq.viewl <$> RWS.get >>= \case
+  RWS.get >>= first Seq.viewl -. \case
     (EmptyL, _) -> pure ()
     ((c, n) :< rest, column)
       | '\HT' <- c
@@ -47,12 +56,19 @@ flushQueue = RWS.ask >>= \width -> do
                               RWS.put (q, p)
                               flushQueue
 
-processLineM :: Monad m => String -> m String
-processLineM s = Foldable.toList . snd <$>
+fixWSLineM :: Monad m => String -> m String
+fixWSLineM s = Foldable.toList . snd <$>
   RWS.execRWST (mapM_ enqueueChar s) 8 (Seq.empty, 1)
 
-processLine :: String -> String
-processLine = runIdentity . processLineM
+fixWSLine :: String -> String
+fixWSLine = runIdentity . fixWSLineM
 
-main :: IO () -- This could be mapM_ (putStrLn <=< processLineM)
-main = mapM_ (putStrLn . processLine) . lines =<< getContents
+fixWSFile :: IO.Handle -> IO String
+fixWSFile fileHandle = IO.hGetContents fileHandle <&> lines <&&> fixWSLine <&> unlines
+
+-- This could be mapM_ (putStrLn <=< processLineM)
+fixWSstdio :: IO ()
+fixWSstdio = putStr =<< fixWSFile IO.stdin
+
+main :: IO ()
+main = fixWSstdio

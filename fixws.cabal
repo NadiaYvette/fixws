@@ -12,8 +12,6 @@ maintainer:             nadia.chambers@gmail.com
 license:                EUPL-1.2
 license-files:          EUPL-1.2-EN.txt
 build-type:             Simple
--- extra-source-files:     README.md
--- data-files:             data/*.json
 
 common project-config
   if os(windows)
@@ -25,13 +23,6 @@ library
 
   hs-source-dirs:       src
   exposed-modules:      Data.Char.FixWS
-
-  -- other-modules:        Data.Char.FixWS
-                        -- Paths_fixws
-  -- other-modules:        Paths_fixws
-
-  -- autogen-modules:      Paths_fixws
-
   build-depends:        base
                       , bytestring
                       , cond
@@ -55,8 +46,6 @@ library
                         NamedFieldPuns
                         NoMonoLocalBinds
                         OverloadedLists
-                        -- OverloadedRecordDot
-                        -- OverloadedRecordUpdate
                         OverloadedStrings
                         PolyKinds
                         PartialTypeSignatures
@@ -74,14 +63,12 @@ library
 executable fixws
   import:               project-config
   hs-source-dirs:       app
-  main-is:              Main.hs
+  main-is:              fixws.hs
   default-language:     Haskell2010
   ghc-options:          -threaded
                         -Wall
                         -rtsopts
                         "-with-rtsopts=-T"
-  -- other-modules:        FixWS.Main
-
   build-depends:        base
                       , bytestring
                       , cond
@@ -104,8 +91,6 @@ executable fixws
                         NamedFieldPuns
                         NoMonoLocalBinds
                         OverloadedLists
-                        -- OverloadedRecordDot
-                        -- OverloadedRecordUpdate
                         OverloadedStrings
                         PolyKinds
                         PartialTypeSignatures

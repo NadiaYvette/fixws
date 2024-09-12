@@ -20,14 +20,13 @@ common project-config
 common with-library
 library
   import:               project-config
-
   hs-source-dirs:       src
   exposed-modules:      Data.Char.FixWS
   build-depends:        base
                       , containers
                       , composition-extra
                       , transformers
-
+                      , tuple
   default-language:     Haskell2010
   default-extensions:   BlockArguments
                         ConstraintKinds
@@ -54,6 +53,7 @@ library
                         ScopedTypeVariables
                         StandaloneDeriving
                         TemplateHaskell
+                        TupleSections
                         TypeApplications
                         TypeFamilies
                         TypeOperators
@@ -72,6 +72,7 @@ executable fixws
                       , containers
                       , composition-extra
                       , transformers
+                      , tuple
   default-extensions:   BlockArguments
                         ConstraintKinds
                         DataKinds
@@ -97,6 +98,7 @@ executable fixws
                         ScopedTypeVariables
                         StandaloneDeriving
                         TemplateHaskell
+                        TupleSections
                         TypeApplications
                         TypeFamilies
                         TypeOperators
